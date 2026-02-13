@@ -36,22 +36,38 @@ is_curve = (autonomo / b2) - ((1 - c1 - b1) / b2) * y_range
 k, h = 0.4, 20
 lm_curve = (k / h) * y_range - (1 / h) * (m_nominal / precios)
 
-# --- GRÁFICO ---
+# --- CÁLCULO DEL EQUILIBRIO (Matemática interna) ---
+# Resolvemos el sistema IS-LM para Y
+# IS: i = A/b2 - B*Y  |  LM: i = (k/h)Y - (M/Ph)
+B = (1 - c1 - b1) / b2
+alpha = (k / h) + B
+y_equilibrio = ( (autonomo / b2) + (m_nominal / (precios * h)) ) / alpha
+i_equilibrio = (k / h) * y_equilibrio - (m_nominal / (precios * h))
+
+# --- GRÁFICO MEJORADO ---
 fig, ax = plt.subplots(figsize=(10, 6))
 ax.plot(y_range, is_curve, label="Curva IS (Bienes)", color="blue", lw=2)
 ax.plot(y_range, lm_curve, label="Curva LM (Dinero)", color="red", lw=2)
 
-# Estética del gráfico
-ax.set_title("Equilibrio en el Mercado de Bienes y Dinero")
+# Añadir un punto en el equilibrio
+if 0 < y_equilibrio < 800:
+    ax.scatter(y_equilibrio, i_equilibrio, color='black', zorder=5)
+    ax.annotate(f' Equilibrio\n (Y={y_equilibrio:.1f}, i={i_equilibrio:.1f})', 
+                (y_equilibrio, i_equilibrio), fontsize=10, fontweight='bold')
+
+# Ajuste dinámico de los ejes
+ax.set_title("Equilibrio en el Mercado de Bienes y Dinero (IS-LM)", fontsize=14)
 ax.set_xlabel("Ingreso / Producción (Y)")
 ax.set_ylabel("Tasa de Interés (i)")
-ax.set_ylim(0, 20)
-ax.set_xlim(0, 800)
+
+# Esto asegura que si la tasa es negativa (matemáticamente), el gráfico no se vea raro
+ax.set_ylim(0, max(is_curve.max(), 15)) 
 ax.grid(True, alpha=0.3)
 ax.legend()
 
-# Mostrar en la App
 st.pyplot(fig)
 
-# --- ANÁLISIS ECONÓMICO ---
-st.info(f"**Análisis:** Con G={gasto} y M/P={m_nominal/precios:.2f}, el modelo muestra el equilibrio dinámico.")
+# --- MÉTRICAS ---
+col1, col2 = st.columns(2)
+col1.metric("Producción de Equilibrio (Y*)", f"{y_equilibrio:.2f}")
+col2.metric("Tasa de Interés (i*)", f"{i_equilibrio:.2f}%")
